@@ -1,5 +1,7 @@
 import { useContext, useEffect } from "react";
 import { useState } from "react";
+import { usePagamentoContext } from "./Pagamento";
+import { UsuarioContext } from "./Usuario";
 
 const { createContext } = require("react");
 
@@ -8,9 +10,18 @@ CarrinhoContext.displayName = "Carrinho";
 export function CarrinhoProvider({ children }) {
   const [carrinho, setCarrinho] = useState([]);
   const [quantidade, setQuantidade] = useState(0);
+  const [novoTotalCarrinho, setNovoTotalCarrinho] = useState();
+
   return (
     <CarrinhoContext.Provider
-      value={{ carrinho, setCarrinho, quantidade, setQuantidade }}
+      value={{
+        carrinho,
+        setCarrinho,
+        quantidade,
+        setQuantidade,
+        novoTotalCarrinho,
+        setNovoTotalCarrinho,
+      }}
     >
       {children}
     </CarrinhoContext.Provider>
@@ -18,16 +29,35 @@ export function CarrinhoProvider({ children }) {
 }
 
 export const useCarrinhoContext = () => {
-  const { carrinho, setCarrinho, quantidade, setQuantidade } =
-    useContext(CarrinhoContext);
+  const {
+    carrinho,
+    setCarrinho,
+    quantidade,
+    setQuantidade,
+    setNovoTotalCarrinho,
+    novoTotalCarrinho,
+  } = useContext(CarrinhoContext);
+
+  const { formaPagamento } = usePagamentoContext();
+  console.log("olaolaola")
+  console.log(formaPagamento)
+  const { setSaldo, saldo } = useContext(UsuarioContext);
+  function efetuarCompra() {
+    setCarrinho([]);
+    setSaldo(saldo - novoTotalCarrinho);
+  }
 
   useEffect(() => {
-    const novaQuantidade = carrinho.reduce(
-      (contador, produto) => contador + produto.quantidade,
-      0
+    const { novaQuantidade, novoTotal } = carrinho.reduce(
+      (contador, item) => ({
+        novaQuantidade: contador.novaQuantidade + item.quantidade,
+        novoTotal: contador.novoTotal + item.valor * item.quantidade,
+      }),
+      { novaQuantidade: 0, novoTotal: 0 }
     );
     setQuantidade(novaQuantidade);
-  }, [carrinho, setQuantidade]);
+    setNovoTotalCarrinho(novoTotal );
+  }, [carrinho, setQuantidade, setNovoTotalCarrinho]);
 
   function mudarQuantidade(id, quantidade) {
     return carrinho.map((itemDoCarrinho) => {
@@ -65,5 +95,7 @@ export const useCarrinhoContext = () => {
     removerProduto,
     setQuantidade,
     quantidade,
+    setNovoTotalCarrinho,
+    novoTotalCarrinho,
   };
 };

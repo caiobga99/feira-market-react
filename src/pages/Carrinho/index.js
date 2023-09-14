@@ -1,6 +1,12 @@
-import { Button, Snackbar, InputLabel } from "@material-ui/core";
+import {
+  Button,
+  Snackbar,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@material-ui/core";
 import MuiAlert from "@material-ui/lab/Alert";
-import { useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import {
   Container,
   Voltar,
@@ -10,11 +16,23 @@ import {
 import { useHistory } from "react-router-dom/cjs/react-router-dom";
 import Produto from "components/Produto";
 import { useCarrinhoContext } from "common/contexts/Carrinho";
+import {
+  PagamentoContext,
+  usePagamentoContext,
+} from "common/contexts/Pagamento";
+import { UsuarioContext } from "common/contexts/Usuario";
 
 function Carrinho() {
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const { tiposPagamentos, formaPagamento, mudarFormaPagamento } =
+    usePagamentoContext();
   const history = useHistory();
-  const { carrinho } = useCarrinhoContext();
+  const { carrinho, novoTotalCarrinho } = useCarrinhoContext();
+  const { saldo } = useContext(UsuarioContext);
+  const saldoTotal = useMemo(
+    () => saldo - novoTotalCarrinho,
+    [saldo, novoTotalCarrinho]
+  );
   return (
     <Container>
       <Voltar onClick={() => history.goBack()} />
@@ -24,20 +42,30 @@ function Carrinho() {
       ))}
       <PagamentoContainer>
         <InputLabel> Forma de Pagamento </InputLabel>
+        <Select
+          onChange={(e) => mudarFormaPagamento(e.target.value)}
+          value={formaPagamento.id}
+        >
+          {tiposPagamentos.map((tiposPagamento) => (
+            <MenuItem key={tiposPagamento.id} value={tiposPagamento.id}>
+              {tiposPagamento.nome}
+            </MenuItem>
+          ))}
+        </Select>
       </PagamentoContainer>
 
       <TotalContainer>
         <div>
           <h2>Total no Carrinho: </h2>
-          <span>R$ </span>
+          <span>R$ {novoTotalCarrinho}</span>
         </div>
         <div>
-          <h2> Saldo: </h2>
-          <span> R$ </span>
+          <h2> Saldo:</h2>
+          <span> R$ {saldo}</span>
         </div>
         <div>
           <h2> Saldo Total: </h2>
-          <span> R$ </span>
+          <span> R$ {saldoTotal}</span>
         </div>
       </TotalContainer>
       <Button
